@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import time
 from http import HTTPStatus
 
@@ -19,7 +20,7 @@ ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 
-HOMEWORK_STATUSES = {
+VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
@@ -28,7 +29,19 @@ HOMEWORK_STATUSES = {
 
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
-    bot.send_message(TELEGRAM_CHAT_ID, message)
+    # bot.send_message(TELEGRAM_CHAT_ID, message)
+    try:
+        bot.send_message(TELEGRAM_CHAT_ID, message)
+    except telegram.error.TelegramError as error:
+        logging.exception(
+            f'Не удалось отправить сообщение {message} '
+            f'пользователю с ID {TELEGRAM_CHAT_ID}. '
+            f'Ошибка: {error}', exc_info=True)
+    else:
+        logging.info(
+            f'Сообщение {message} '
+            f'пользователю c ID {TELEGRAM_CHAT_ID} '
+            f'успешно отослано.')
 
 
 def get_api_answer(current_timestamp):
@@ -48,11 +61,14 @@ def get_api_answer(current_timestamp):
         raise ConnectionError(message)
     else:
         if homework_statuses.status_code == HTTPStatus.OK:
-            # Возврещает ответ API в формате JSON
+            # Был комментарий ревьювера "Здесь тоже нужно перехватывать ошибки"
+            # Но я вызываю исключение в else ниже и записываю всё в логах
+            logging.info('API практикума доступно')
             response = homework_statuses.json()
+            # Возврещает ответ API в формате JSON
             return response
         else:
-            message = 'Статус не 200'
+            message = 'Статус API не 200, отсутствует соединение'
             logging.critical(message)
             raise ConnectionError(message)
 
@@ -92,11 +108,11 @@ def parse_status(homework):
     homework_name = homework['homework_name']
     homework_status = homework['status']
 
-    if homework_status in HOMEWORK_STATUSES:
-        verdict = HOMEWORK_STATUSES[homework_status]
+    if homework_status in VERDICTS:
+        verdict = VERDICTS[homework_status]
     else:
         message = 'Статус ответа не известен'
-        # raise APIResponseError(message)
+        raise APIResponseError(message)
 
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -105,9 +121,9 @@ def check_tokens():
     """Проверяет доступность переменных окружения для работы программы."""
     return all(
         [
-            PRACTICUM_TOKEN is not None,
-            TELEGRAM_TOKEN is not None,
-            TELEGRAM_CHAT_ID is not None,
+            PRACTICUM_TOKEN,
+            TELEGRAM_TOKEN,
+            TELEGRAM_CHAT_ID,
         ]
     )
 
@@ -117,10 +133,13 @@ def main():
     if not check_tokens():
         message = 'Одна или несколько пересменных окружения не доступны'
         logging.critical(message)
-        raise NameError(message)
+        sys.exit(message)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     send_message(bot, 'Бот запущен и отслеживает статус проверки ДЗ!')
+    # Был комментарий ревьювера
+    # 'Это тоже стоит обернуть в try-except'
+    # Не обернул, потому что прописал try-except внутри метода
 
     while True:
         try:
