@@ -31,7 +31,6 @@ VERDICTS = {
 
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
-    # bot.send_message(TELEGRAM_CHAT_ID, message)
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
     except telegram.error.TelegramError as error:
@@ -68,6 +67,7 @@ def get_api_answer(current_timestamp):
             logging.info('API практикума доступно')
             response = homework_statuses.json()
             # Возврещает ответ API в формате JSON
+            logging.info(response)
             return response
         else:
             message = 'Статус API не 200, отсутствует соединение'
@@ -96,7 +96,7 @@ def check_response(response):
         return []
 
     else:
-        return response['homeworks']
+        return response['homeworks'][0]
 
 
 def parse_status(homework):
@@ -138,10 +138,8 @@ def main():
         sys.exit(message)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
+    # 1655464652
     send_message(bot, 'Бот запущен и отслеживает статус проверки ДЗ!')
-    # Был комментарий ревьювера
-    # 'Это тоже стоит обернуть в try-except'
-    # Не обернул, потому что прописал try-except внутри метода
 
     while True:
         try:
@@ -151,7 +149,9 @@ def main():
                 if len(homework) > 0:
                     message = parse_status(homework)
                     send_message(bot, message)
-                current_timestamp = response.get('current_date')
+                # current_timestamp = response.get('current_date')
+                current_timestamp = int(time.time())
+                logging.info(current_timestamp)
             time.sleep(RETRY_TIME)
 
         except Exception as error:
