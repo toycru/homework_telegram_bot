@@ -167,9 +167,13 @@ if __name__ == '__main__':
         '%(asctime)s [%(levelname)s] - '
         '(%(filename)s).%(funcName)s:%(lineno)d - %(message)s'
     )
+    log_stream = sys.stdout
     logging.basicConfig(
         level=logging.INFO,
-        filename='homework_bot.log',
-        format=log_format
+        format=log_format,
+        handlers=[
+            logging.FileHandler('homework_bot.log', encoding='utf-8'),
+            logging.StreamHandler(log_stream)
+        ]
     )
     main()
