@@ -139,7 +139,8 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     # 1655464652
-    send_message(bot, 'Бот запущен и отслеживает статус проверки ДЗ!')
+    # send_message(bot, 'Бот запущен и отслеживает статус проверки ДЗ!')
+    # Сообщение вверху можно раскоментить для общей проверки работы бота
 
     while True:
         try:
