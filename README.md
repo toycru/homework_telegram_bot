@@ -1,4 +1,4 @@
-# Telegram-бот для проверки статуса о проверке домашних заданий
+# Telegram-бот отправляющий статусы о проверке домашних заданий
 
 **Стек технологий:** Python 3.7, Dotenv 0.19.0, Telegram API (python-telegram-bot 13.7), Yandex.Practicum API.
 
